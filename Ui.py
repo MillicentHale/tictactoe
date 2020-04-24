@@ -1,5 +1,9 @@
-from abc import ABC, abstractmethod
+from tkinter import Button, Tk, Toplevel, Frame, N,S,E,W,X,Y, LEFT,RIGHT, END, Scrollbar, Text, Message, Grid, StringVar
 from game import Game, GameError
+from sys import stderr
+from itertools import product
+from abc import ABC, abstractmethod
+
 
 class Ui(ABC):
 
@@ -9,10 +13,63 @@ class Ui(ABC):
 
 class Gui(Ui):
     def __init__(self):
+        root = Tk()
+        root.title("Tic Tac Toe")
+        frame = Frame(root)
+        frame.pack()
+        Button(
+            frame,
+            text='Show Help',
+            command=self.play_callback
+        ).pack(fill=X)
+        Button(
+            frame,
+            text='Play Game',
+            command=self.play_callback
+        ).pack(fill=X)
+
+        self._root = root
+
+    def help_callback(self):
         pass
 
+    def play_callback(self):
+        self.game = Game()
+        game_win = Toplevel(self._root)
+        game_win.title("Game")
+        frame = Frame(game_win)
+        frame.grid(row = 0, column = 0)
+
+        self._buttons = [[None for _ in range (Game.dimension)] for _ in range (Game.dimension)]
+
+        for row, column in product(range(Game.dimension), range(Game.dimension)):
+            b = StringVar()
+            b.set(self._game.at(row+1, column+1))
+
+            cmd = lambda r=row, c=column : self.play_and_refresh(r, c)
+
+            Button(
+                frame,
+                textvariable = b,
+                command=cmd
+            ).grid(row = row, column = column)
+
+            self._buttons[row][column] = b
+
+        Button(game_win, text="Dismiss", command=game_win.destroy).grid(row=1, column = 0)
+
+    def play_and_refresh(self, row, column):
+        try:
+            self._game.play(row + 1, column + 1)
+        except GameError as e:
+            print (e)
+
+        for row, column in product(range(Game.dimension), range(Game.dimension)):
+            text = self._game.at(row + 1, column + 1)
+            self._buttons[row][column].set(text)
+    
     def run(self):
-        pass
+        self._root.mainloop()
 
 class Terminal(Ui):
     def __init__(self):
