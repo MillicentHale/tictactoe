@@ -66,6 +66,11 @@ It is {self._player}'s turn
         else:
             return False
 
+    def at(self, row, column):
+        if not 1 <= row <= Game.dimension and 1 <= column <= Game.dimension:
+            raise GameError("Incorrect dimensions for at")
+        return self.board[row-1][column-1]
+
 
 
 if __name__ == "__main__":

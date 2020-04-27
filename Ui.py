@@ -15,6 +15,7 @@ class Gui(Ui):
     def __init__(self):
         root = Tk()
         root.title("Tic Tac Toe")
+        self.game_win = None
         frame = Frame(root)
         frame.pack()
         Button(
@@ -28,15 +29,30 @@ class Gui(Ui):
             command=self.play_callback
         ).pack(fill=X)
 
+        console = Text(frame, height=4, width=50)
+        scroll = Scrollbar(frame)
+        scroll.pack(side=RIGHT, fill=Y)
+        console.pack(side=LEFT, fill=Y)
+
+        self._console = console
         self._root = root
 
     def help_callback(self):
         pass
 
+    def game_close(self):
+        self.game_win.destroy()
+        self.game_win = None
+
     def play_callback(self):
+        if self.game_win:
+            return None
         self.game = Game()
         game_win = Toplevel(self._root)
+        self.game_win = game_win
         game_win.title("Game")
+        Grid.rowconfigure(game_win, 0, weight = 1)
+        Grid.columnconfigure(game_win, 0, weight = 1)
         frame = Frame(game_win)
         frame.grid(row = 0, column = 0)
 
@@ -44,7 +60,7 @@ class Gui(Ui):
 
         for row, column in product(range(Game.dimension), range(Game.dimension)):
             b = StringVar()
-            b.set(self._game.at(row+1, column+1))
+            b.set(self.game.at(row+1, column+1))
 
             cmd = lambda r=row, c=column : self.play_and_refresh(r, c)
 
@@ -56,17 +72,24 @@ class Gui(Ui):
 
             self._buttons[row][column] = b
 
-        Button(game_win, text="Dismiss", command=game_win.destroy).grid(row=1, column = 0)
+        Button(game_win, text="Dismiss", command=self.game_close).grid(row=1, column = 0)
 
     def play_and_refresh(self, row, column):
         try:
-            self._game.play(row + 1, column + 1)
+            self.game.play(row + 1, column + 1)
         except GameError as e:
             print (e)
 
         for row, column in product(range(Game.dimension), range(Game.dimension)):
-            text = self._game.at(row + 1, column + 1)
+            text = self.game.at(row + 1, column + 1)
             self._buttons[row][column].set(text)
+
+        w = self.game.winner
+        if w is not None:
+            if self.game.drawn:
+                self._console.insert(END, "The game was drawn")
+            else:
+                self._console.insert(END, f"The game was won by {w}")
     
     def run(self):
         self._root.mainloop()
